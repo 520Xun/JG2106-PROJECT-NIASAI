@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace：命名空间，对应一个dao层接口的全路径 -->
+<mapper namespace="com.zzxy.pj.sys.dao.SysLogDao">
+	
+	<sql id="queryUsername">
+		<where>
+			<if test="username != null and username != ''">
+			 	username like concat("%", #{username}, "%")
+			</if>
+		</where>
+	</sql>
+	
+	<!-- include标签：引入sql标签中的sql，refid要与sql的id相同 -->
+	<select id="getRowCount" resultType="int">
+		select count(1) from sys_logs <include refid="queryUsername"/>
+	</select>
+	
+	<select id="findLogObject" resultType="com.zzxy.pj.sys.entity.SysLog">
+		select * from sys_logs 
+			<include refid="queryUsername"/>
+			order by createdTime 
+			limit #{start}, #{pageSize}
+	</select>
+	
+	<delete id="deleteLogByIds">
+		delete from sys_logs where id in
+		<foreach collection="array" item="id" open="(" separator="," close=")">
+			#{id}
+		</foreach>
+	</delete>
+
+	<select id="findLogObjectByUserName" resultType="com.zzxy.pj.sys.entity.SysLog">
+		select * from sys_logs
+		<include refid="queryUsername"/>
+	</select>
+</mapper>        

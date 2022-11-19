@@ -1,0 +1,48 @@
+<div id="main" style="width: 900px;height: 700px"></div>
+<script type="text/javascript">
+    // 基于准备好的dom，初始化echarts实例
+    var myChart = echarts.init(document.getElementById('main'));
+    var dataList=[];
+    //配置属性
+    option = {
+        title: {
+            text: 'Referer of a Website',
+            subtext: 'Fake Data',
+            left: 'center'
+        },
+        tooltip: {
+            trigger: 'item'
+        },
+        legend: {
+            orient: 'vertical',
+            left: 'left'
+        }
+    };
+    var url="map/yqMap";
+    $.get(url,{},function (result) {
+        var data = result.data;
+        debugger;
+        for (var i = 0; i < data.length; i++) {
+            dataList[i] = data[i];
+        }
+        myChart.setOption({
+            series: [
+                {
+                    name: '中国疫情数据',
+                    type: 'pie',
+                    radius: '50%',
+                    data: dataList,
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowOffsetX: 0,
+                            shadowColor: 'rgba(0, 0, 0, 0.5)'
+                        }
+                    }
+                }
+            ]
+        })
+    })
+    //刷新数据
+    myChart.setOption(option)
+</script>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace：命名空间，对应一个dao层接口的全路径 -->
+<mapper namespace="com.zzxy.pj.sys.dao.SysRoleMenuDao">
+	
+	<!-- 通过菜单id删除权限菜单数据 -->
+	<delete id="deleteRoleMenuByMenuId">
+		delete from sys_role_menus where menu_id = #{menuId}
+	</delete>
+	
+	<insert id="insertRoleMenu">
+         insert into sys_role_menus (role_id,menu_id) values 
+         <foreach collection="menuIds" separator="," item="menuIds">
+              (#{roleId},#{menuIds})
+         </foreach>
+ 	</insert>
+	<!-- 根据角色id查找菜单id -->
+	<select id="findMenuIdsByRoleId" resultType="int">
+		select menu_id  from sys_role_menus  where role_id=#{id}
+	</select>
+
+	<select id="findMenuIdsByRoleIds" resultType="int">
+			select menu_id   from sys_role_menus where role_id in
+			<foreach collection="roleIds" separator="," item="roleIds" open="(" close=")">
+				#{roleIds}
+			</foreach>
+	</select>
+</mapper>        

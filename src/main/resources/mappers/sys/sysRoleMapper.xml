@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace：命名空间，对应一个dao层接口的全路径 -->
+<mapper namespace="com.zzxy.pj.sys.dao.SysRoleDao">
+	<sql id="roleQuery">
+		<if test="name != null and name != ''">
+			where name like concat("%", #{name}, "%");
+		</if>
+	</sql>
+	<!-- 查找所有的角色 -->
+	<select id="findRole" resultType="com.zzxy.pj.sys.entity.SysRole">
+		select * from sys_roles
+		<include refid="roleQuery"/>
+		limit #{start}, #{pageSize}
+	</select>
+	
+	<select id="countRole" resultType="int">
+		select count(1) from sys_roles
+		<include refid="roleQuery"/>
+	</select>
+	
+	<!--parameterType： 参数类型 
+		keyProperty ：返回到参数实体类中的id属性
+		useGeneratedKeys：是否获取自增主键，会填充到参数的id属性中-->
+	 <insert id="insertRole" parameterType="com.zzxy.pj.sys.entity.SysRole" useGeneratedKeys="true"
+			keyProperty="id">
+         insert into sys_roles values
+         (null,#{name},#{note},now(),now(),#{createdUser},#{modifiedUser})
+    </insert>
+	
+	<select id="findRoleMenuIds" resultMap="roleMenuVo">
+		select id,name,note from sys_roles where id=#{id}
+	</select>
+	
+	<!-- type：返回值类型 -->
+	<resultMap type="com.zzxy.pj.sys.vo.SysRoleMenuVo" id="roleMenuVo">
+		<!--property：对应实体类的属性，一般是主键属性  
+			column:字段名，对应resultMap查询的字段名-->
+		<id property="id" column="id"></id>
+		<!-- SysRoleMenuVo中一个id 对应多个menuId
+			一对多的情况需要用 collection 标签
+			property:查出来的值，注入到指定的属性中
+			column: 根据该指定字段去查
+			select；dao接口全路径+方法，指定这个地方查询
+			association ：1对1 collection：1对多
+		-->
+		<collection property="menuIds" column="id"
+			select="com.zzxy.pj.sys.dao.SysRoleMenuDao.findMenuIdsByRoleId">
+		</collection>
+		
+	</resultMap>
+	<update id="updatRoleByRoleId">
+		 update sys_roles set name=#{name}, note=#{note},modifiedTime=now() where id=#{id}
+	</update>
+</mapper>        

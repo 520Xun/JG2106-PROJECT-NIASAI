@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<!-- namespace：命名空间，对应一个dao层接口的全路径 -->
+<mapper namespace="com.zzxy.pj.sys.dao.SysUserDao">
+	
+	<sql id="userQuery">
+		<where>
+			<if test="username != null and username !=''">
+			 username like concat("%", #{username}, "%")
+			</if>
+		</where>
+	</sql>
+	
+	<!-- 查找所有的角色 -->
+	<select id="findUserDeptVo" resultMap="sysUserDeptVo">
+		select * from sys_users
+		<include refid="userQuery"/>
+		limit #{start}, #{pageSize}
+	</select>
+	
+	<resultMap type="com.zzxy.pj.sys.vo.SysUserDeptVo" id="sysUserDeptVo">
+            <association property="sysDept" column="deptId"
+                       select="com.zzxy.pj.sys.dao.SysDeptDao.findDeptById">
+            </association>
+   </resultMap>
+	
+	<select id="getCountByUser" resultType="int">
+		select count(1) from sys_users <include refid="userQuery"/>
+	</select>
+	
+	<insert id="insertUser"
+           parameterType="com.zzxy.pj.sys.entity.SysUser"
+           useGeneratedKeys="true"  keyProperty="id">
+      insert into sys_users
+      (username,password,deptId,email,mobile,salt,valid,
+      createdTime,modifiedTime,createdUser,modifiedUser)
+      values
+    (#{username},#{password},#{deptId},#{email},#{mobile},#{salt},#{valid},
+      now(),now(),#{createdUser},#{modifiedUser})
+	</insert>
+
+	<update id="updateUser">
+		update sys_users set deptId=#{deptId},email=#{email},mobile=#{mobile},valid=#{valid},modifiedTime=now() where id=#{id};
+	</update>
+
+</mapper>        

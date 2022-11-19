@@ -1,0 +1,41 @@
+<ul class="pagination pagination-sm no-margin pull-right">
+    <li><a class="first">首页</a></li>
+	<li><a class="pre">上一页</a></li>
+	<li><a class="next">下一页</a></li>
+	<li><a class="last">尾页</a></li>
+	<li><a class="rowCount">总记录数(0)</a></li>
+	<li><a class="pageCount">总页数(0)</a></li>
+	<li><a class="pageCurrent">当前页(1)</a></li>
+</ul>
+<script type="text/javascript">
+	$(function(){
+		//给指定的选择器动态绑定点击事件
+		$("#pageId").on("click", ".first, .pre, .next, .last", doJumpToPage);
+	})
+	
+	function doJumpToPage(){
+		var clzName = $(this).attr("class");
+		var maxPage = $("#pageId").data("countPage");//最大页
+		var curPage = $("#pageId").data("curPage");//当前页
+		if(clzName == 'first'){
+			$("#pageId").data("curPage", 1);//当前页赋值为1
+		}else if(clzName == 'last'){
+			$("#pageId").data("curPage", maxPage);//当前页赋值为最大页
+		}else if(clzName == 'pre' && curPage > 1){
+			var prePage = curPage - 1;//当前页-1
+			$("#pageId").data("curPage", prePage);
+		}else if(clzName == 'next' &&  curPage < maxPage){
+			var nextPage = curPage + 1;//当前页+1
+			$("#pageId").data("curPage", nextPage);
+		}
+		doGetObjects();//重新查找数据
+	}
+	
+	function setPageData(pageObj){
+		$(".rowCount").text("总记录数(" + pageObj.countSize + ")");
+		$(".pageCount").text("总页数(" + pageObj.countPage + ")");
+		$(".pageCurrent").text("当前页(" + pageObj.curPage + ")");
+		$("#pageId").data("curPage" , pageObj.curPage);
+		$("#pageId").data("countPage" , pageObj.countPage);
+	}
+</script>

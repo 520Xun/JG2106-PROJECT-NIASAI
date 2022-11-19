@@ -1,0 +1,125 @@
+<!-- Horizontal Form -->
+ <div class="box box-info">
+      <div class="box-header with-border">
+        <h3 class="box-title">添加角色</h3>
+      </div>
+      <!-- /.box-header -->
+      <!-- form start -->
+      <form class="form-horizontal">
+        <div class="box-body">
+          <div class="form-group">
+            <label for="nameId" class="col-sm-2 control-label">名称</label>
+
+            <div class="col-sm-10">
+              <input type="text" class="form-control" name="name" id="nameId" placeholder="名称">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="noteId" class="col-sm-2 control-label">描述</label>
+
+            <div class="col-sm-10">
+              <input type="text" class="form-control" name="note" id="noteId" placeholder="描述">
+            </div>
+          </div>
+          <div class="form-group">
+				<label class="col-sm-2 control-label">授权</label>
+				<div class="col-sm-10">
+						<ul id="menuTree" class="ztree"></ul>
+				</div>
+		  </div>
+        </div>
+        <!-- /.box-body -->
+        <div class="box-footer">
+          <button type="button" class="btn btn-default btn-cancel">Cancel</button>
+          <button type="button" class="btn btn-info pull-right btn-save">Save</button>
+        </div>
+        <!-- /.box-footer -->
+      </form>
+    </div>
+    <script type="text/javascript" src="bower_components/ztree/jquery.ztree.all.min.js"></script>
+    <script type="text/javascript">
+    var zTree;
+	   $(function(){
+			loadMenuZtree();
+			$(".box-footer").on("click",".btn-cancel",backToRoleUI).on("click",".btn-save",saveOrUpdateRole)
+		})
+	//提交或者修改
+	function saveOrUpdateRole(){
+		var roleId=$("#mainContentId").data("roleId");//获取修改角色id
+		var url=roleId?"role/updateRoleById":"role/saveRole";
+		//拿值
+		var name=$("#nameId").val();//名称
+		var note=$("#noteId").val();//描述
+		var params={
+			name :name,
+			note :note,
+		}
+		if(roleId){//如果有值，则是修改，参数需要带上id
+			params.id=roleId
+		}
+		//调用zTree树的获取勾选中行的方法，返回节点集合，拿到所有节点的id
+		var nodes=zTree.getCheckedNodes();// getSelectedNodes();不是勾选，是点击选择
+		var ids=[];
+		for(var k in nodes ){
+			ids.push(nodes[k].id);
+		}
+		params.menuIds=ids;//给参数加一个ids的键值对
+		//处理请求
+		$.get(url,params,function(result){
+			//处理回调结果集
+			alert(result.message);
+			doGetObjects();
+		})
+	}
+	//返回角色查询界面
+	function backToRoleUI(){
+		$("#mainContentId").data("roleId","");//返回取消绑定数据
+		$("#mainContentId").load("role/role_list");
+	}
+	var setting = {
+	   	data : {
+	   	    simpleData : {
+	   			enable : true,
+	   			idKey : "id",  //节点数据中保存唯一标识的属性名称
+	   			pIdKey : "parentId",  //节点数据中保存其父节点唯一标识的属性名称
+	   			rootPId : null  //根节点id
+	   		}
+	   	},
+	   	check:{
+	   		enable:true,
+	   		nocheckInherit:true
+	   	}
+	}
+	function loadMenuZtree(){
+		//查找数据
+		$.get("menu/doFindMenus",{},function(result){
+			zTree=$.fn.zTree.init($("#menuTree"),setting,result.data);
+			zTree.expandAll(true);//全部展开
+		})
+		
+		loadRoleUpDateData();//加载填充角色数据
+	}
+	
+	//修改角色数据填充
+	function loadRoleUpDateData(){
+		var roleId=$("#mainContentId").data("roleId");//获取修改角色id
+		var param={
+			id:roleId
+		}
+		var url="role/findRoleMenuIdsByRoleId";//通过角色id找角色以及角色菜单id
+		$.get(url,param,function(result){
+			$("#nameId").val(result.data.name);
+			$("#noteId").val(result.data.note);
+			var ids=result.data.menuIds;
+			debugger;
+			//i表示下标
+			for(var i in ids){
+				//第一个参数为节点的属性，第二个参数属性值
+				//找到属性为id，属性为ids[i]的节点
+				var node = zTree.getNodesByParam("id",ids[i]);
+				//选中指定节点
+				zTree.checkNode(node[0],true,false);
+			}
+		})
+	}
+</script>

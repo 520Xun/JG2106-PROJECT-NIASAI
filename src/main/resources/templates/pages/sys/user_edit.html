@@ -1,0 +1,209 @@
+<!-- Horizontal Form -->
+ <div class="box box-info">
+      <div class="box-header with-border">
+        <h3 class="box-title">添加用户</h3>
+        <h3 class="msg"></h3>
+      </div>
+      <!-- /.box-header -->
+      <!-- form start -->
+      <form class="form-horizontal">
+        <div class="box-body">
+         
+          <div class="form-group">
+            <label for="usernameId" class="col-sm-2 control-label">用户名</label>
+            <div class="col-sm-10">
+              <input type="text" name="username" class="form-control" id="usernameId">
+            </div>
+          </div>
+          <div class="form-group" id="pwdDiv">
+            <label for="passwordId" class="col-sm-2 control-label">密码</label>
+
+            <div class="col-sm-10">
+              <input type="password" name="password" class="form-control"  id="passwordId">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="deptId" class="col-sm-2 control-label">所属部门</label>
+            <div class="col-sm-10">
+              <input type="text" class="form-control load-sys-dept" readonly="readonly" id="deptId" placeholder="所属部门">
+            </div>
+          </div>
+          
+          <div class="form-group">
+            <label for="emailId" class="col-sm-2 control-label">邮箱</label>
+            <div class="col-sm-10">
+              <input type="text" name="email" class="form-control"  id="emailId">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="phoneId" class="col-sm-2 control-label">手机号</label>
+              <div class="col-sm-10">
+              <input type="text" name="mobile" class="form-control"  id="phoneId">
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="rolesId" class="col-sm-2 control-label">角色</label>
+            <div class="col-sm-10" id="rolesId">
+              	<ul class="roles-ul" id="roles-ul">
+              		
+              	</ul>
+            </div>
+          </div>
+        </div>
+        <!-- /.box-body -->
+        <div class="box-footer">
+          <button type="button" class="btn btn-default btn-cancel">Cancel</button>
+          <button type="button" class="btn btn-info pull-right btn-save">Save</button>
+        </div>
+        <!-- /.box-footer -->
+      </form>
+     <div class="layui-layer layui-layer-page layui-layer-molv layer-anim" id="treeLayer" type="page" times="2" showtime="0" contype="object"
+		style="z-index:59891016; width: 300px; height: 450px; top: 100px; left: 500px; display:none">
+		<div class="layui-layer-title" style="cursor: move;">选择部门</div>
+		<div class="layui-layer-content" style="height: 358px;">
+			<div style="padding: 10px;" class="layui-layer-wrap">
+				<ul id="zTreeId" class="ztree"></ul>    <!-- 动态加载树 -->
+			</div>
+		</div>
+		<span class="layui-layer-setwin"> <a class="layui-layer-ico layui-layer-close layui-layer-close1 btn-cancel" ></a></span>
+		<div class="layui-layer-btn layui-layer-btn-">
+			<a class="layui-layer-btn0 btn-confirm">确定</a>
+			<a class="layui-layer-btn1 btn-cancel">取消</a>
+	     </div>
+      </div>
+    </div>
+<script type="text/javascript" src="bower_components/ztree/jquery.ztree.all.min.js"></script>
+<script type="text/javascript" src="bower_components/layer/layer.js"></script>
+<script type="text/javascript">
+ 	var zTree;//zTree节点树
+ 	var setting={
+		data:{
+			simpleData: {
+			enable: true,
+			idKey: "id",
+			pIdKey: "parentId",
+			rootPId: null
+			}
+		}
+	}
+	
+	$(function(){
+		loadRolesData();
+		$("#deptId").on("click",loadDeptZtree);
+		$(".layui-layer").on("click",".btn-cancel",hideDeptZtree)
+                        .on("click",".btn-confirm",sureParentDept);
+		$(".box-footer").on("click",".btn-cancel",backToUserList)
+						.on("click",".btn-save",saveOrUpdateUser);
+	});
+	
+	//选择上级部门
+	function sureParentDept(){
+		var nodes = zTree.getSelectedNodes();//获取被选中的节点集合
+		if(!nodes.length){
+			alert("未选中上级部门！");
+			return;
+		}
+		$("#deptId").val(nodes[0].name);//把父菜单名填进去
+		//绑定父菜单id，因为存入数据库的数据是父菜单的id
+		$("#deptId").data("deptId", nodes[0].id);
+		hideDeptZtree();//点完确定就隐藏
+	}
+	
+	//提交增加或者修改用户
+	function saveOrUpdateUser(){
+		//判断用户名、密码、角色、部门不能为空
+		var username=$("#usernameId").val();
+		var password=$("#passwordId").val();
+		var deptId=$("#deptId").data("deptId");
+        var email=$("#emailId").val();
+		var roleIds=[];
+		var checks=$("#roles-ul input[type='checkbox']:checked");
+		var mobile=$("#phoneId").val();
+		for(var i=0;i<checks.length;i++){
+			var roleId=$(checks[i]).val();
+			roleIds.push(roleId);
+		}
+		if(!username||!password||!deptId||!roleIds||!phoneId){
+			alert("用户信息不能为空！");
+			return;
+		}
+        var params={
+            username:username,
+            password:password,
+            deptId:deptId,
+            email:email,
+            mobile: mobile,
+            roleIds:roleIds
+        }
+        var url=$("#mainContentId").data("userId")?"user/updateUser":"user/saveUser";
+        if($("#mainContentId").data("userId")) params.id = $("#mainContentId").data("userId");
+        $.get(url,params,function (result){
+            alert(result.message);
+            doGetObjects();//刷新页面数据
+        })
+	}
+	
+	function backToUserList(){
+		//清空绑定的数据
+        $("#mainContentId").data("userId","");
+		$("#mainContentId").load("user/user_list");
+	}
+	//初始化加载角色信息
+	function loadRolesData(){
+		var url="role/findAllRole";
+		$.get(url,{},function(result){
+			var data=result.data;
+			for(var k in data){
+				var str="<li class='role-li'><input type='checkbox' value="+data[k].id+" id="+data[k].id+"><label for="+data[k].id+">"
+				+data[k].name+"</lable></li>";
+				$("#roles-ul").append(str);
+			}
+            if($("#mainContentId").data("userId")){
+                initUpdataUserData();
+            }
+		})
+	}
+    //初始化修改用户信息
+    function initUpdataUserData(){
+        var user=$("#mainContentId").data("userRow");
+        $("#usernameId").val(user.username).attr("readonly", "readonly");
+        $("#passwordId").val(user.password).attr("readonly", "readonly");;
+        $("#deptId").val(user.sysDept.name);
+        $("#emailId").val(user.email);
+        $("#phoneId").val(user.mobile);
+        $("#deptId").data("deptId",user.sysDept.id)
+        var param={userId :$("#mainContentId").data("userId")}
+        $.get("user/findRoleByUserId",param,function (result){
+            var roleIds=result.data;//该用户所对应的所有角色id
+            var inps=$(".roles-ul input");
+            for (var i = 0; i < inps.length; i++) {
+               var id= $(inps[i]).val();//每一个多选的id
+               var bool= roleIds.indexOf(parseInt(id));
+               if(bool!=-1){
+                   $(inps[i]).prop("checked",true);
+               }
+            }
+        })
+    }
+	//隐藏部门节点树
+	function hideDeptZtree(){
+		$("#treeLayer").hide();
+	}
+	function loadDeptZtree(){
+		var url="dept/findDeptZtree";
+		$.get(url,{},function(result){
+			zTree = $.fn.zTree.init($("#zTreeId"), setting, result.data);
+			$("#treeLayer").show();
+		}).fail(function(){//回调失败
+			alert("查询失败");
+		})
+	}
+</script>
+    
+    
+    
+    
+    
+    
+    

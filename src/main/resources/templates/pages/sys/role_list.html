@@ -1,0 +1,122 @@
+<div class="row">
+	<div class="col-xs-12">
+		<div class="box">
+			<div class="box-header">
+				<h3 class="box-title">角色管理</h3>
+				<div class="box-tools">
+					<div class="input-group input-group-sm" style="width: 350px;">
+						<input type="text" name="table_search" id="searchNameId"
+							class="form-control pull-right" placeholder="角色名">
+
+						<div class="input-group-btn">
+							<button type="button" class="btn btn-default btn-search">
+                                <i class="fa fa-search"></i>
+							</button>
+							<button type="button" class="btn btn-default btn-add">添加</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /.box-header -->
+			<div class="box-body table-responsive no-padding">
+				<form>
+				  <table class="table table-hover">
+					<thead>
+						<tr>
+						    <th>序号</th>
+							<th>角色名称</th>
+							<th>备注</th>
+							<th>创建时间</th>
+							<th>修改时间</th>
+							<th>创建用户</th>
+							<th>修改用户</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody id="tbodyId">
+					</tbody>
+				  </table>
+				</form>
+			</div>
+			<!-- /.box-body -->
+			<div id="pageId" class="box-footer clearfix">
+            </div>
+		</div>
+		<!-- /.box -->
+	</div>
+</div>
+<script type="text/javascript">
+	$(function(){
+		//先加载分页页面，再访问数据
+		$("#pageId").load("doPageUI", function(){
+			doGetObjects();
+		});
+		
+		//$(".btn-add,.btn-update").on("click",EditRoleUI);
+		$(".box").on("click", ".btn-add, .btn-update", EditRoleUI);
+	})
+	
+	//跳往编辑页面
+	function EditRoleUI(){
+		var title=$(this).hasClass("btn-update")?"修改角色":"添加角色";
+		if(title=="修改角色"){
+			var id = $(this).parents("tr").data("roleId");
+			$("#mainContentId").data("roleId",id);
+		}
+		$("#mainContentId").load("role/role_edit",function(){
+			$(".box-title").text(title);//添加角色或者修改角
+		});
+	}
+	
+	function doGetObjects(){
+		var url = "role/findRole";
+		//取当前页
+		var curPage = $("#pageId").data("curPage");
+		var params = {
+				"name" : $("#searchNameId").val(),
+				"curPage" : curPage ? curPage : 1,
+				"pageSize" : 10
+		};
+		$.get(url, params, function(result){
+			if(result.state == 0){
+				alert(result.message);
+			}else{
+				loadRoleData(result.data.pageData);//加载表格主体数据
+				setPageData(result.data);//加载分页数据
+			}
+		})
+	}
+	
+	function loadRoleData(data){
+		var tbody = $("#tbodyId");
+		tbody.empty();//清空表格主体部分
+		for(var i = 0;i < data.length; i++){
+			var d = data[i];
+			var tr = "<tr><td>" + (i + 1) + "</td>"
+					+ "<td>" + d.name + "</td>"
+					+ "<td>" + d.note + "</td>"
+					+ "<td>" + (d.createTime ? d.createTime : "") + "</td>"
+					+ "<td>" + (d.modifiedTime ? d.modifiedTime : "")+ "</td>"
+					+ "<td>" + (d.createdUser ? d.createdUser : "") + "</td>"
+					+ "<td>" + (d.modifiedUser ? d.modifiedUser : "") + "</td>"
+					+ "<td><a class='btn-delete'>删除</a>&nbsp;<a class='btn-update'>修改</a></td></tr>";
+			tbody.append(tr);
+			//把每一行的id绑定到当前行
+			tbody.find("tr:last").data("roleId", d.id);
+		}
+		$(".btn-delete").on("click",deleteRole);//动态绑定删除角色按钮
+	}
+	
+	function deleteRole(){
+		//找到当前行的tr绑定的roleId
+		var id=$(this).parents("tr").data("roleId");
+		var param={id:id};
+		var url="role/deleteRole";
+		//var tr=$(this).parents("tr");
+		$.get(url,param,function(result){
+			alert(result.message);
+			//tr.remove();//有分页不能静态删除
+			doGetObjects();//刷新数据
+		})
+	}
+</script>

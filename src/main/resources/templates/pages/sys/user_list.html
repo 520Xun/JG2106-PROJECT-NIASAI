@@ -1,0 +1,141 @@
+<div class="row">
+	<div class="col-xs-12">
+		<div class="box">
+			<div class="box-header">
+				<h3 class="box-title">用户管理</h3>
+
+				<div class="box-tools">
+					<div class="input-group input-group-sm" style="width: 350px;">
+						<input type="text" name="table_search" id="searchNameId"
+							class="form-control pull-right" placeholder="用户名">
+
+						<div class="input-group-btn">
+							<button type="button" class="btn btn-default btn-search">
+                                <i class="fa fa-search"></i>
+							</button>
+							<button type="button" class="btn btn-default btn-add">添加</button>
+							<button type="button" class="btn btn-default btn-update">修改</button>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /.box-header -->
+			<div class="box-body table-responsive no-padding">
+				<table class="table table-hover">
+					<thead>
+						<tr>
+							<th>ID</th>
+							<th>用户名</th>
+							<th>部门</th>
+							<th>邮箱</th>
+							<th>手机号</th>
+							<th>状态</th>
+							<th>创建时间</th>
+							<th>修改时间</th>
+							<th>操作</th>
+						</tr>
+					</thead>
+					<tbody id="tbodyId"></tbody>
+				</table>
+			</div>
+			<div id="pageId" class="box-footer clearfix">
+			</div>
+			<!-- /.box-body -->
+		</div>
+		<!-- /.box -->
+	</div>
+</div>
+<script type="text/javascript">
+   $(function(){
+		//先加载分页，在查询数据
+	   $("#pageId").load("doPageUI",function(){
+		   doGetObjects();
+	   });
+
+	   $(".btn-search").on("click",doGetObjects);
+	   $(".input-group-btn").on("click",".btn-add,.btn-update",saveUserUI);
+   });
+
+   //编辑页面
+   function saveUserUI(){
+	   	var title=$(this).hasClass("btn-add")?"新增用户":"修改用户";
+		if(title=="修改用户"){
+			var radioCheck=$("#tbodyId").find("input[type='radio']:checked");
+			if(!radioCheck.length){
+				alert("请选择要修改的数据！");
+				return;
+			}
+			$("#mainContentId").data("userId",radioCheck.val());
+			var rowData=radioCheck.parents("tr").data("userRow");
+			$("#mainContentId").data("userRow",rowData);
+		}
+	   var url="sys/user_edit";
+		$("#mainContentId").load(url,function (){
+			$(".box-title").text(title);//修改标签
+		});
+	}
+
+   //页面加载完成异步加载当前页数据
+   function doGetObjects(){
+	   var url="user/findUserDeptVo";
+	 	var curPage = $("#pageId").data("curPage");
+		var params = {
+				"username" : $("#searchNameId").val(),
+				"curPage" : curPage ? curPage : 1,
+				"pageSize" : 10
+		};
+	   $.get(url,params,function(result){
+		   if(result.state==1){
+				loadUserData(result.data.pageData);//处理响应数据
+				setPageData(result.data);//设置页码数据
+			}else{
+				alert(result.message);
+			}
+	   });
+   }
+
+   //清空原来的数据
+   function loadUserData(data){
+		  $("#tbodyId").empty();
+		  //2.迭代data内容将数据追加到tbody中
+		  for(var i = 0; i < data.length; i++){
+			var  str="<tr><td><input type='radio' name='radioId' value='"+data[i].id+"' ></td>"+
+		     "<td>"+data[i].username+"</td>"+
+		     "<td>"+(data[i].sysDept?data[i].sysDept.name:'未分配')+"</td>"+
+		     "<td>"+data[i].email+"</td>"+
+		     "<td>"+data[i].mobile+"</td>"+
+		     "<td>"+(data[i].valid?"启用":"禁用")+"</td>"+
+		     "<td>"+data[i].createdTime+"</td>"+
+		     "<td>"+data[i].modifiedTime+"</td>"+
+		     "<td><button type='button' class='btn btn-default btn-valid' onclick='changValId(this)'>"+(data[i].valid?"禁用":"启用")+"</button></td></tr>";
+			  $("#tbodyId").append(str);
+			  //每一行上面绑定当前行的数据
+			  $("#tbodyId tr").last().data("userRow",data[i]);
+		 }
+	}
+	//状态禁用/启用按钮
+	function changValId(btn){
+		var id=$(btn).parents("tr").find("input").val();//找到当前行的id
+		var valId=$(btn).text()=="禁用"?0:1;
+		var url="user/updateValId"
+		var param={
+			id:id,
+			valId:valId
+		}
+		$.get(url,param,function(result){
+			alert(result.message);
+			//也可静态修改
+			//doGetObjects();
+			//静态刷新：
+			if(result.state == 1){
+				$(btn).text(valId==0?"启用":"禁用");
+				$(btn).parents("tr").children(":eq(5)").text(valId==1?"启用":"禁用");
+			}
+		});
+	}
+
+</script>
+
+
+
+
